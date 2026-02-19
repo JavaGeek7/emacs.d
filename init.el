@@ -1,4 +1,40 @@
-;;; ~/.emacs.d/init.el
+;; ~/.emacs.d/init.el
+
+;; ------------------------------------------------------------
+;; System
+;; ------------------------------------------------------------
+(global-set-key (kbd "C-\\") 'ignore)
+(global-set-key (kbd "<kanji>") 'ignore)
+(global-set-key (kbd "M-<kanji>") 'ignore)
+(setq read-file-name-completion-ignore-case t)
+(setq read-buffer-completion-ignore-case t)
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+(setq browse-url-browser-function 'eww-browse-url)
+(add-hook 'prog-mode-hook #'goto-address-mode)
+(add-hook 'text-mode-hook #'goto-address-mode)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (require 'vterm)
+            (vterm)))
+(setq initial-buffer-choice
+      (lambda ()
+        (require 'vterm)
+        (vterm)
+        (current-buffer)))
+
+;; ------------------------------------------------------------
+;; Font
+;; ------------------------------------------------------------
+(set-face-attribute 'default nil
+                    :family "Inconsolata"
+                    :height 160)
+
+(set-fontset-font t 'japanese-jisx0208
+                  (font-spec :family "PlemolJP Console"))
+(set-fontset-font t 'katakana-jisx0201
+                  (font-spec :family "PlemolJP Console"))
 
 ;; ------------------------------------------------------------
 ;; Projectile
@@ -44,7 +80,8 @@
   (interactive)
   (find-file user-init-file))
 (global-set-key (kbd "C-c C-s") #'my/open-init-file)
-
+(with-eval-after-load 'java-mode
+  (define-key java-mode-map (kbd "C-c C-s") #'my/open-init-file))
 ;; ------------------------------------------------------------
 ;; Grep
 ;; ------------------------------------------------------------
@@ -72,7 +109,6 @@
 ;; LSP(Java)
 ;; ------------------------------------------------------------
 
-;; lsp-mode 本体
 (use-package lsp-mode
   :ensure t
   :commands lsp
@@ -81,17 +117,18 @@
   :custom
   (lsp-keymap-prefix "C-c l"))
 
-;; Java 用フロントエンド (Eclipse JDT LS)
 (use-package lsp-java
   :after lsp-mode
   :hook (java-mode . lsp))
 
-;; 保存時にフォーマット & import 整理
 (with-eval-after-load 'lsp-java
   (add-hook 'java-mode-hook
             (lambda ()
               (add-hook 'before-save-hook #'lsp-format-buffer nil t)
               (add-hook 'before-save-hook #'lsp-organize-imports nil t))))
+
+(with-eval-after-load 'lsp-java
+  (setq lsp-java-completion-filtered-types []))
 
 ;; ------------------------------------------------------------
 ;; organize-imports-java
@@ -160,9 +197,6 @@
 ;; ------------------------------------------------------------
 ;; TAGS
 ;; ------------------------------------------------------------
-(setq tags-table-list
-      '("~/workspace/git/jdk/TAGS"))
-
 (setq tags-revert-without-query t)
 
 (defun jni-auto-visit-tags ()
@@ -175,3 +209,12 @@
 
 (add-hook 'java-mode-hook #'jni-auto-visit-tags)
 (add-hook 'c-mode-hook    #'jni-auto-visit-tags)
+
+;; ------------------------------------------------------------
+;; Vterm
+;; ------------------------------------------------------------
+(use-package vterm
+  :ensure t)
+(use-package vterm
+  :ensure t
+  :bind (("C-c v" . vterm)))
