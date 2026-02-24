@@ -25,6 +25,16 @@
         (current-buffer)))
 
 ;; ------------------------------------------------------------
+;; Search
+;; ------------------------------------------------------------
+(setq dabbrev-case-fold-search t)
+
+;; ------------------------------------------------------------
+;; Color Scheme
+;; ------------------------------------------------------------
+(load-theme 'manoj-dark t)
+
+;; ------------------------------------------------------------
 ;; Font
 ;; ------------------------------------------------------------
 (set-face-attribute 'default nil
@@ -82,6 +92,23 @@
 (global-set-key (kbd "C-c C-s") #'my/open-init-file)
 (with-eval-after-load 'java-mode
   (define-key java-mode-map (kbd "C-c C-s") #'my/open-init-file))
+
+(global-set-key (kbd "C-h") 'delete-backward-char)
+(global-set-key (kbd "<backspace>") 'delete-backward-char)
+
+(defun move-line-up()
+  (interactive)
+  (transpose-lines 1)
+  (forward-line -2))
+(defun move-line-down()
+  (interactive)
+  (forward-line 1)
+  (transpose-lines 1)
+  (forward-line -1))
+
+(global-set-key (kbd "M-<up>") 'move-line-up)
+(global-set-key (kbd "M-<down>") 'move-line-down)
+
 ;; ------------------------------------------------------------
 ;; Grep
 ;; ------------------------------------------------------------
@@ -106,109 +133,40 @@
 (setq use-package-always-ensure t)
 
 ;; ------------------------------------------------------------
-;; LSP(Java)
-;; ------------------------------------------------------------
-
-(use-package lsp-mode
-  :ensure t
-  :commands lsp
-  :hook
-  ((java-mode . lsp))
-  :custom
-  (lsp-keymap-prefix "C-c l"))
-
-(use-package lsp-java
-  :after lsp-mode
-  :hook (java-mode . lsp))
-
-(with-eval-after-load 'lsp-java
-  (add-hook 'java-mode-hook
-            (lambda ()
-              (add-hook 'before-save-hook #'lsp-format-buffer nil t)
-              (add-hook 'before-save-hook #'lsp-organize-imports nil t))))
-
-(with-eval-after-load 'lsp-java
-  (setq lsp-java-completion-filtered-types []))
-
-;; ------------------------------------------------------------
-;; organize-imports-java
-;; ------------------------------------------------------------
-(use-package organize-imports-java
-  :after java-mode
-  :config
-  (define-key java-mode-map (kbd "C-S-o")
-    #'organize-imports-java-do-imports))
-
-;; ------------------------------------------------------------
-;; LSP UI / Completion / Diagnostics
-;; ------------------------------------------------------------
-
-;; UI: doc popup, sideline, etc.
-(use-package lsp-ui
-  :after lsp-mode
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-enable t)
-  (lsp-ui-sideline-enable t))
-
-;; Completion frontend
-(use-package company
-  :hook (after-init . global-company-mode)
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.1))
-
-;; Diagnostics
-(use-package flycheck
-  :hook (lsp-mode . flycheck-mode))
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(manoj-dark))
- '(package-selected-packages nil))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-;; ------------------------------------------------------------
 ;; Window movement
 ;; ------------------------------------------------------------
 (global-set-key (kbd "M-h") 'windmove-left)
 (global-set-key (kbd "M-j") 'windmove-down)
 (global-set-key (kbd "M-k") 'windmove-up)
 (global-set-key (kbd "M-l") 'windmove-right)
+(with-eval-after-load 'vterm
+  (define-key vterm-mode-map (kbd "M-h") #'windmove-left)
+  (define-key vterm-mode-map (kbd "M-j") #'windmove-down)
+  (define-key vterm-mode-map (kbd "M-k") #'windmove-up)
+  (define-key vterm-mode-map (kbd "M-l") #'windmove-right))
 
+;; ------------------------------------------------------------
 ;; Window resize
+;; ------------------------------------------------------------
 (global-set-key (kbd "M-H")
-                (lambda () (interactive) (shrink-window-horizontally 5)))
+                (lambda () (interactive) (shrink-window-horizontally 1)))
 (global-set-key (kbd "M-L")
-                (lambda () (interactive) (enlarge-window-horizontally 5)))
+                (lambda () (interactive) (enlarge-window-horizontally 1)))
 (global-set-key (kbd "M-J")
-                (lambda () (interactive) (shrink-window 5)))
+                (lambda () (interactive) (shrink-window 1)))
 (global-set-key (kbd "M-K")
-                (lambda () (interactive) (enlarge-window 5)))
+                (lambda () (interactive) (enlarge-window 1)))
 
-;; ------------------------------------------------------------
-;; TAGS
-;; ------------------------------------------------------------
-(setq tags-revert-without-query t)
-
-(defun jni-auto-visit-tags ()
-  (let* ((root (or (projectile-project-root)
-                   (vc-root-dir)
-                   default-directory))
-         (tags-file (expand-file-name "TAGS" root)))
-    (when (file-exists-p tags-file)
-      (visit-tags-table tags-file))))
-
-(add-hook 'java-mode-hook #'jni-auto-visit-tags)
-(add-hook 'c-mode-hook    #'jni-auto-visit-tags)
+(add-hook 'vterm-mode-hook
+          (lambda ()
+            (local-set-key (kbd "M-H")
+                           (lambda () (interactive) (shrink-window-horizontally 1)))
+            (local-set-key (kbd "M-L")
+                           (lambda () (interactive) (enlarge-window-horizontally 1)))
+            (local-set-key (kbd "M-J")
+                           (lambda () (interactive) (shrink-window 1)))
+            (local-set-key (kbd "M-K")
+                           (lambda () (interactive) (enlarge-window 1)))))
 
 ;; ------------------------------------------------------------
 ;; Vterm
@@ -218,3 +176,36 @@
 (use-package vterm
   :ensure t
   :bind (("C-c v" . vterm)))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes '(manoj-dark)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+(put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
+
+;; ------------------------------------------------------------
+;; JDK Source
+;; ------------------------------------------------------------
+(defun my-jdk-java-find-file ()
+  "Select a .java file under ~/workspace/git/jdk/src and open it."
+  (interactive)
+  (let* ((default-directory "~/workspace/git/jdk/src")
+         (files (split-string
+                 (shell-command-to-string
+                  "find . -maxdepth 10 -type f -name \"*.java\"")
+                 "\n" t))
+         (completion-styles '(substring flex basic))
+         (completion-ignore-case t)
+         (choice (completing-read "JDK Java file: " files nil t)))
+    (when choice
+      (find-file (expand-file-name choice default-directory)))))
+
+(global-set-key (kbd "C-x j") #'my-jdk-java-find-file)
